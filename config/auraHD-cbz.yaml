@@ -1,0 +1,7 @@
+srcDir: ./input
+destDir: ./output/auraHD
+destFilename: ${filename}
+width: 1080
+height: 1430
+quality: 80
+maxProcess: 0

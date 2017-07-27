@@ -1,0 +1,8 @@
+#!/bin/bash
+CURDIR=$(pwd)
+export GOPATH=$CURDIR
+cd $CURDIR/src/lec3-conv
+go install
+cd $CURDIR
+mv $CURDIR/bin/*.exe $CURDIR
+$CURDIR/lec3-conv.exe -cfg=config/auraHD-cbz.yaml

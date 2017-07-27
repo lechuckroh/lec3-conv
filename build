@@ -1,0 +1,9 @@
+#!/bin/bash
+CURDIR=$(pwd)
+export GOPATH=$CURDIR
+go get -u github.com/rwcarlsen/goexif/exif
+go get -u github.com/disintegration/gift
+go get -u github.com/olebedev/config
+go get -u github.com/mitchellh/mapstructure
+cd $CURDIR/src/lec3-conv
+go install
