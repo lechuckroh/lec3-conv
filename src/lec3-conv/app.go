@@ -2,12 +2,25 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"image"
 	"log"
 	"path"
 	"runtime"
 	"sync"
+	"time"
 )
+
+//-----------------------------------------------------------------------------
+// Log
+//-----------------------------------------------------------------------------
+
+type logWriter struct {
+}
+
+func (writer logWriter) Write(bytes []byte) (int, error) {
+	return fmt.Print(time.Now().Format("15:04:05") + " " + string(bytes))
+}
 
 //-----------------------------------------------------------------------------
 // Work
@@ -54,7 +67,7 @@ func work(worker Worker, config *Config, wg *sync.WaitGroup) {
 			break
 		}
 
-		log.Printf("[R] %v\n", work.filename)
+		log.Printf("[READ] %v\n", work.filename)
 
 		src, err := LoadImage(path.Join(work.dir, work.filename))
 		if err != nil {
@@ -62,7 +75,7 @@ func work(worker Worker, config *Config, wg *sync.WaitGroup) {
 			continue
 		}
 
-		// TODO: process image
+		// process image
 		var destImg image.Image
 
 		// resize
@@ -78,6 +91,9 @@ func work(worker Worker, config *Config, wg *sync.WaitGroup) {
 }
 
 func main() {
+	log.SetFlags(0)
+	log.SetOutput(new(logWriter))
+
 	cfgFilename := flag.String("cfg", "", "configuration filename")
 	srcDir := flag.String("src", "", "source directory")
 	destDir := flag.String("dest", "", "dest directory")
