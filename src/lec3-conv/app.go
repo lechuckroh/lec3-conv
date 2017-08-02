@@ -86,9 +86,11 @@ func work(worker Worker, config *Config, wg *sync.WaitGroup) {
 			0.1,
 			1,
 			9999,
-			180)
+			180,
+			config.emptyLineThreshold)
 
 		// resize
+		SaveJpeg(dest, "./temp", "result.jpg", 80)
 		dest = ResizeImage(dest, config.width, config.height)
 
 		// save dest Image

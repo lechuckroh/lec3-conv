@@ -236,7 +236,7 @@ func getLineRanges(src image.Image,
 			if brightness < threshold16 {
 				dotCount++
 				if dotCount >= maxDotCount {
-					emptyLine = true
+					emptyLine = false
 					break
 				}
 			}
@@ -340,9 +340,10 @@ func ChangeLineSpace(
 	lineSpaceScale float32,
 	minSpace int,
 	maxRemove int,
-	threshold uint32) image.Image {
+	threshold uint32,
+	emptyLineThreshold float64) image.Image {
 
-	ranges := getLineRanges(src, threshold)
+	ranges := getLineRanges(src, threshold, emptyLineThreshold)
 
 	width := src.Bounds().Dx()
 	targetHeight := processLineRanges(ranges,
