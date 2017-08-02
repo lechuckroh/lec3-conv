@@ -1,0 +1,8 @@
+srcDir: ./input
+destDir: ./output/koboGlo
+destFilename: ${filename}
+width: 758
+height: 942
+quality: 80
+maxCPU: 0
+emptyLineThreshold: 0.01

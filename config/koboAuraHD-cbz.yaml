@@ -1,0 +1,8 @@
+srcDir: ./input
+destDir: ./output/koboAuraHD
+destFilename: ${filename}
+width: 1080
+height: 1430
+quality: 80
+maxCPU: 0
+emptyLineThreshold: 0.01

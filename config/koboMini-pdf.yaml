@@ -1,8 +1,8 @@
 srcDir: ./input
-destDir: ./output/auraHD
+destDir: ./output/koboMini
 destFilename: ${filename}
-width: 1080
-height: 1430
+width: 600
+height: 730
 quality: 80
 maxCPU: 0
 emptyLineThreshold: 0.01

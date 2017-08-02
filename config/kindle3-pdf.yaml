@@ -1,0 +1,8 @@
+srcDir: ./input
+destDir: ./output/k3
+destFilename: ${filename}
+width: 560
+height: 735
+quality: 80
+maxCPU: 0
+emptyLineThreshold: 0.01
