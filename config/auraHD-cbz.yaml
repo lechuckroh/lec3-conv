@@ -4,4 +4,5 @@ destFilename: ${filename}
 width: 1080
 height: 1430
 quality: 80
-maxProcess: 0
+maxCPU: 0
+emptyLineThreshold: 0.01

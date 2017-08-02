@@ -76,13 +76,24 @@ func work(worker Worker, config *Config, wg *sync.WaitGroup) {
 		}
 
 		// process image
-		var destImg image.Image
+		// --------------
+		var dest image.Image
+
+		// change line space
+		dest = ChangeLineSpace(src,
+			float32(config.width),
+			float32(config.height),
+			0.1,
+			1,
+			9999,
+			180)
 
 		// resize
-		destImg = ResizeImage(src, config.width, config.height)
+		dest = ResizeImage(dest, config.width, config.height)
 
 		// save dest Image
-		err = SaveJpeg(destImg, config.destDir, work.filename, 80)
+		// ---------------
+		err = SaveJpeg(dest, config.destDir, work.filename, 80)
 		if err != nil {
 			log.Printf("Error : %v : %v\n", work.filename, err)
 			continue
@@ -109,8 +120,8 @@ func main() {
 	config := NewConfig(*cfgFilename, *srcDir, *destDir)
 	config.Print()
 
-	// set maxProcess
-	runtime.GOMAXPROCS(config.maxProcess)
+	// set maxCPU
+	runtime.GOMAXPROCS(config.maxCPU)
 
 	// Create channels
 	workChan := make(chan Work, 100)
@@ -123,7 +134,7 @@ func main() {
 	go collectImages(workChan, finChan, config.srcDir)
 
 	// start workers
-	for i := 0; i < config.maxProcess; i++ {
+	for i := 0; i < config.maxCPU; i++ {
 		worker := Worker{workChan}
 		wg.Add(1)
 		go work(worker, config, &wg)
@@ -133,7 +144,7 @@ func main() {
 	<-finChan
 
 	// finish workers
-	for i := 0; i < config.maxProcess; i++ {
+	for i := 0; i < config.maxCPU; i++ {
 		workChan <- Work{"", "", true}
 	}
 

@@ -23,7 +23,7 @@ func getExt(filename string) string {
 
 // LoadImage loads image from file
 func LoadImage(filename string) (image.Image, error) {
-	var decoder func(io.Reader) (image.Image, error) = nil
+	var decoder func(io.Reader) (image.Image, error)
 
 	ext := getExt(filename)
 	switch ext {
@@ -154,13 +154,20 @@ func RotatePoint(x, y, asin, acos float32) (float32, float32) {
 }
 
 // RotateImage rotates the image by given angle.
-//
-func RotateImage(src image.Image, angle float32, bgColor color.Color) image.Image {
+// empty area after rotation is filled with bgColor
+func RotateImage(
+	src image.Image,
+	angle float32,
+	bgColor color.Color) image.Image {
 	bounds := src.Bounds()
 	width, height := CalcRotatedSize(bounds.Dx(), bounds.Dy(), angle)
 	dest := image.NewRGBA(image.Rect(0, 0, width, height))
-	draw.Draw(dest, dest.Bounds(), &image.Uniform{color.White}, image.ZP, draw.Src)
-	gift.New(gift.Rotate(angle, bgColor, gift.CubicInterpolation)).Draw(dest, src)
+	draw.Draw(dest, dest.Bounds(),
+		&image.Uniform{color.White},
+		image.ZP,
+		draw.Src)
+	rotateFilter := gift.Rotate(angle, bgColor, gift.CubicInterpolation)
+	gift.New(rotateFilter).Draw(dest, src)
 	return dest
 }
 
@@ -169,5 +176,200 @@ func ResizeImage(src image.Image, width, height int) image.Image {
 	g := gift.New(gift.ResizeToFit(width, height, gift.LanczosResampling))
 	dest := image.NewRGBA(g.Bounds(src.Bounds()))
 	g.Draw(dest, src)
+	return dest
+}
+
+// ---------------------------------------------------------------------------
+// 줄간격 변경
+// ---------------------------------------------------------------------------
+type lineRange struct {
+	start        int
+	end          int
+	height       int
+	targetHeight int
+	emptyLine    bool
+}
+
+func (r *lineRange) calc(scale float32, minHeight, maxRemove int) {
+	r.height = r.end - r.start + 1
+	if !r.emptyLine || r.height <= minHeight {
+		r.targetHeight = r.height
+	} else {
+		if maxRemove > 0 {
+			r.targetHeight = Max(minHeight, int(float32(r.height)*scale+0.5))
+			if removed := r.height - r.targetHeight; removed > maxRemove {
+				r.targetHeight = r.height - maxRemove
+			}
+		}
+	}
+}
+
+func (r lineRange) getReducedHeight() int {
+	return r.height - r.targetHeight
+}
+
+func getBrightness(r, g, b uint32) uint32 {
+	return (r + g + b) / 3
+}
+
+// getLineRanges returns list of text and empty lines
+func getLineRanges(src image.Image,
+	threshold uint32,
+	emptyLineThreshold float64) []lineRange {
+	bounds := src.Bounds()
+	srcWidth, srcHeight := bounds.Dx(), bounds.Dy()
+	threshold16 := threshold * 256
+
+	var ranges []lineRange
+	var r lineRange
+
+	maxDotCount := int(emptyLineThreshold)
+	if emptyLineThreshold < 1 {
+		maxDotCount = int(float64(srcWidth) * emptyLineThreshold)
+	}
+	for y := 0; y < srcHeight; y++ {
+		emptyLine := true
+		dotCount := 0
+		for x := 0; x < srcWidth; x++ {
+			r, g, b, _ := src.At(x, y).RGBA()
+			brightness := getBrightness(r, g, b)
+			if brightness < threshold16 {
+				dotCount++
+				if dotCount >= maxDotCount {
+					emptyLine = true
+					break
+				}
+			}
+		}
+
+		if emptyLine {
+			if y == 0 {
+				r = lineRange{start: y, end: y, emptyLine: true}
+			} else {
+				if r.emptyLine {
+					r.end = y
+				} else {
+					ranges = append(ranges, r)
+					r = lineRange{start: y, end: y, emptyLine: true}
+				}
+			}
+		} else {
+			if y == 0 {
+				r = lineRange{start: y, end: y, emptyLine: false}
+			} else {
+				if r.emptyLine {
+					ranges = append(ranges, r)
+					r = lineRange{start: y, end: y, emptyLine: false}
+				} else {
+					r.end = y
+				}
+			}
+		}
+
+	}
+	ranges = append(ranges, r)
+	return ranges
+}
+
+func processLineRanges(
+	ranges []lineRange,
+	width int,
+	widthRatio float32,
+	heightRatio float32,
+	lineSpaceScale float32,
+	minSpace int,
+	maxRemove int) int {
+
+	targetHeight := 0
+	for i := 0; i < len(ranges); i++ {
+		r := &ranges[i]
+		r.calc(lineSpaceScale, minSpace, maxRemove)
+		targetHeight += r.targetHeight
+	}
+
+	minTargetHeight := int(heightRatio * float32(width) / widthRatio)
+
+	loop := 0
+	maxLoopCount := 5
+	for targetHeight < minTargetHeight && loop < maxLoopCount {
+		totalReducedHeight := 0
+		for i := 0; i < len(ranges); i++ {
+			r := ranges[i]
+			if r.emptyLine {
+				totalReducedHeight += r.getReducedHeight()
+			}
+		}
+
+		totalInc := 0
+		if totalReducedHeight > 0 {
+			totalEmptyLinesToInc := minTargetHeight - targetHeight
+			for i := 0; i < len(ranges); i++ {
+				r := &ranges[i]
+				if r.emptyLine {
+					reducedHeight := r.getReducedHeight()
+					heightToInc := Min(reducedHeight,
+						reducedHeight*totalEmptyLinesToInc/totalReducedHeight)
+					inc := int(float32(heightToInc) + 0.5)
+					r.targetHeight = r.targetHeight + inc
+					totalInc += inc
+				}
+			}
+		}
+
+		targetHeight = 0
+		for i := 0; i < len(ranges); i++ {
+			r := &ranges[i]
+			targetHeight += r.targetHeight
+		}
+
+		loop++
+
+		if totalInc <= int(float32(targetHeight)/100) {
+			break
+		}
+	}
+
+	return targetHeight
+}
+
+// ChangeLineSpace removes/adds spaces between lines
+func ChangeLineSpace(
+	src image.Image,
+	widthRatio float32,
+	heightRatio float32,
+	lineSpaceScale float32,
+	minSpace int,
+	maxRemove int,
+	threshold uint32) image.Image {
+
+	ranges := getLineRanges(src, threshold)
+
+	width := src.Bounds().Dx()
+	targetHeight := processLineRanges(ranges,
+		width,
+		widthRatio,
+		heightRatio,
+		lineSpaceScale,
+		minSpace,
+		maxRemove)
+
+	dest := image.NewRGBA(image.Rect(0, 0, width, targetHeight))
+	destY := 0
+	for i := 0; i < len(ranges); i++ {
+		r := &ranges[i]
+		rangeHeight := r.height
+		rangeTargetHeight := r.targetHeight
+
+		if rangeHeight > 0 && rangeTargetHeight > 0 {
+			srcRect := image.Rect(0, r.start, width, r.start+rangeTargetHeight)
+			subImage := src.(interface {
+				SubImage(r image.Rectangle) image.Image
+			}).SubImage(srcRect)
+
+			destRect := image.Rect(0, destY, width, targetHeight)
+			draw.Draw(dest, destRect, subImage, image.ZP, draw.Src)
+			destY -= (rangeHeight - rangeTargetHeight)
+		}
+	}
 	return dest
 }

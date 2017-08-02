@@ -10,13 +10,14 @@ import (
 
 // Config defines configuration
 type Config struct {
-	srcDir       string
-	destDir      string
-	destFilename string
-	width        int
-	height       int
-	quality      int
-	maxProcess   int
+	srcDir             string
+	destDir            string
+	destFilename       string
+	width              int
+	height             int
+	quality            int
+	maxCPU             int
+	emptyLineThreshold float64
 }
 
 // LoadYaml loads *.yaml file
@@ -35,10 +36,11 @@ func (c *Config) LoadYaml(filename string) {
 	c.width = cfg.UInt("width", -1)
 	c.height = cfg.UInt("height", -1)
 	c.quality = cfg.UInt("quality", 100)
-	c.maxProcess = cfg.UInt("maxProcess", runtime.NumCPU())
-	if c.maxProcess <= 0 {
-		c.maxProcess = runtime.NumCPU()
+	c.maxCPU = cfg.UInt("maxCPU", runtime.NumCPU())
+	if c.maxCPU <= 0 {
+		c.maxCPU = runtime.NumCPU()
 	}
+	c.emptyLineThreshold, _ = cfg.Float64("emptyLineThreshold")
 }
 
 // Print displays configurations
@@ -48,7 +50,8 @@ func (c *Config) Print() {
 	fmt.Printf("destFilename : %v\n", c.destFilename)
 	fmt.Printf("size : (%v, %v)\n", c.width, c.height)
 	fmt.Printf("quality : %v%%\n", c.quality)
-	fmt.Printf("maxProcess : %v\n", c.maxProcess)
+	fmt.Printf("maxCPU : %v\n", c.maxCPU)
+	fmt.Printf("emptyLineThreshold : %v\n", c.emptyLineThreshold)
 }
 
 // NewConfig creates an instance of Config
