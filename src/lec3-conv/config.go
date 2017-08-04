@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"strings"
 
 	"github.com/olebedev/config"
 )
@@ -41,6 +42,14 @@ func (c *Config) LoadYaml(filename string) {
 		c.maxCPU = runtime.NumCPU()
 	}
 	c.emptyLineThreshold, _ = cfg.Float64("emptyLineThreshold")
+}
+
+// FormatDestFilename formats destFilename pattern
+func (c *Config) FormatDestFilename(filename string) string {
+	result := strings.Replace(c.destFilename, "${filename}", filename, -1)
+	base := strings.ToLower(GetBase(filename))
+	result = strings.Replace(result, "${base}", base, -1)
+	return result
 }
 
 // Print displays configurations

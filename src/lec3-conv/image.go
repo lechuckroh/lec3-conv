@@ -11,21 +11,15 @@ import (
 	"io"
 	"os"
 	"path"
-	"path/filepath"
-	"strings"
 
 	"github.com/disintegration/gift"
 )
-
-func getExt(filename string) string {
-	return strings.ToLower(filepath.Ext(filename))
-}
 
 // LoadImage loads image from file
 func LoadImage(filename string) (image.Image, error) {
 	var decoder func(io.Reader) (image.Image, error)
 
-	ext := getExt(filename)
+	ext := GetExt(filename)
 	switch ext {
 	case ".jpg", ".jpeg":
 		decoder = jpeg.Decode

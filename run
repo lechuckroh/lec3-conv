@@ -4,4 +4,4 @@ export GOPATH=$CURDIR
 cd $CURDIR/src/lec3-conv
 go install
 cd $CURDIR
-$CURDIR/bin/lec3-conv.exe -cfg=$CURDIR/config/auraHD-cbz.yaml
+$CURDIR/bin/lec3-conv.exe -cfg=$CURDIR/config/koboAuraHD-cbz.yaml

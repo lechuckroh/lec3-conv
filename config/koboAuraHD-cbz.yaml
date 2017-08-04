@@ -1,6 +1,6 @@
 srcDir: ./input
 destDir: ./output/koboAuraHD
-destFilename: ${filename}
+destFilename: ${base}.jpg
 width: 1080
 height: 1430
 quality: 80

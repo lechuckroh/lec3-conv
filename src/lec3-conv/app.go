@@ -96,9 +96,10 @@ func work(worker Worker, config *Config, wg *sync.WaitGroup) {
 
 		// save dest Image
 		// ---------------
-		err = SaveJpeg(dest, config.destDir, work.filename, 80)
+		filename := config.FormatDestFilename(work.filename)
+		err = SaveJpeg(dest, config.destDir, filename, 80)
 		if err != nil {
-			log.Printf("Error : %v : %v\n", work.filename, err)
+			log.Printf("Error : %v : %v\n", filename, err)
 			continue
 		}
 	}

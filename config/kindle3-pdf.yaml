@@ -1,6 +1,6 @@
 srcDir: ./input
 destDir: ./output/k3
-destFilename: ${filename}
+destFilename: ${base}.jpg
 width: 560
 height: 735
 quality: 80

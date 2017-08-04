@@ -1,6 +1,6 @@
 srcDir: ./input
 destDir: ./output/koboGlo
-destFilename: ${filename}
+destFilename: ${base}.jpg
 width: 758
 height: 942
 quality: 80

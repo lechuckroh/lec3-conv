@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -46,4 +47,13 @@ func ListImages(dir string) ([]os.FileInfo, error) {
 
 	sort.Sort(result)
 	return result, nil
+}
+
+func GetExt(filename string) string {
+	return strings.ToLower(path.Ext(filename))
+}
+
+func GetBase(filename string) string {
+	base := path.Base(filename)
+	return base[:len(base)-len(path.Ext(filename))]
 }

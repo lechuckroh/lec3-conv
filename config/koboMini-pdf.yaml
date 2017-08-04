@@ -1,6 +1,6 @@
 srcDir: ./input
 destDir: ./output/koboMini
-destFilename: ${filename}
+destFilename: ${base}.jpg
 width: 600
 height: 730
 quality: 80
