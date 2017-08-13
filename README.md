@@ -1,3 +1,5 @@
+Moved to https://github.com/lechuckroh/lec3
+
 # LEC3 Converter
 
 `lec3-conv` converts the scanned images to fit the specific e-book device.
